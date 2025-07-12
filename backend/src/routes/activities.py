@@ -217,10 +217,12 @@ def register_activity(activity_id):
         registration_deadline_aware = beijing_tz.localize(registration_deadline_naive)
         
         if registration_deadline_aware <= now:
+            print(f"报名已截止: 当前时间={now}, 截止时间={registration_deadline_aware}")
             return jsonify({'error': '报名已截止'}), 400
         
         # 检查名额
         if activity.registered_count >= activity.capacity:
+            print(f"活动名额已满: 已报名={activity.registered_count}, 容量={activity.capacity}")
             return jsonify({'error': '活动名额已满'}), 400
         
         # 检查是否已报名
@@ -231,13 +233,15 @@ def register_activity(activity_id):
         ).first()
         
         if existing_registration:
+            print(f"用户已报名此活动: user_id={session['user_id']}, activity_id={activity_id}")
             return jsonify({'error': '您已报名此活动'}), 400
         
         # 创建报名记录
         registration = Registration(
             user_id=session['user_id'],
             activity_id=activity_id,
-            status='confirmed'
+            status='confirmed',
+            notes=None
         )
         
         # 更新活动报名人数
@@ -246,9 +250,11 @@ def register_activity(activity_id):
         db.session.add(registration)
         db.session.commit()
         
+        print(f"报名成功: user_id={session['user_id']}, activity_id={activity_id}")
         return jsonify({'message': '报名成功'}), 201
         
     except Exception as e:
+        print(f"活动报名失败: {str(e)}")
         db.session.rollback()
         return jsonify({'error': '报名失败，请稍后重试'}), 500
 
@@ -265,6 +271,7 @@ def cancel_registration(activity_id):
         ).first()
         
         if not registration:
+            print(f"取消报名失败，未找到报名记录: user_id={session['user_id']}, activity_id={activity_id}")
             return jsonify({'error': '您未报名此活动'}), 400
         
         activity = Activity.query.get(activity_id)
@@ -275,9 +282,11 @@ def cancel_registration(activity_id):
         
         db.session.commit()
         
+        print(f"取消报名成功: user_id={session['user_id']}, activity_id={activity_id}")
         return jsonify({'message': '取消报名成功'}), 200
         
     except Exception as e:
+        print(f"取消报名失败: {str(e)}")
         db.session.rollback()
         return jsonify({'error': '取消报名失败'}), 500
 
