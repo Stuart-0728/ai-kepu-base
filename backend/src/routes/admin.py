@@ -578,8 +578,12 @@ def update_appointment(appointment_id):
 def get_registrations(activity_id):
     try:
         activity = Activity.query.get_or_404(activity_id)
-        # 获取所有报名记录，包括已确认和已取消的
-        registrations = Registration.query.filter_by(activity_id=activity_id).all()
+        # 获取所有报名记录，包括已确认和已取消的，但只包括有效用户
+        registrations = db.session.query(Registration, User).join(
+            User, Registration.user_id == User.id
+        ).filter(
+            Registration.activity_id == activity_id
+        ).all()
         
         # 时区转换
         beijing_tz = pytz.timezone('Asia/Shanghai')
@@ -592,7 +596,7 @@ def get_registrations(activity_id):
         start_time_beijing = start_time_utc.astimezone(beijing_tz)
         
         registration_list = []
-        for reg in registrations:
+        for reg, user in registrations:
             # 将报名时间转换为北京时间
             registered_at_naive = reg.registered_at
             if registered_at_naive.tzinfo is not None:
@@ -600,29 +604,23 @@ def get_registrations(activity_id):
             registered_at_utc = pytz.utc.localize(registered_at_naive)
             registered_at_beijing = registered_at_utc.astimezone(beijing_tz)
             
-            user_info = None
-            if reg.user:
-                user_info = {
-                    'username': reg.user.username,
-                    'email': reg.user.email,
-                    'phone': reg.user.phone or '未提供'
-                }
-            
             registration_list.append({
                 'id': reg.id,
-                'user_id': reg.user_id,
-                'registered_at': registered_at_beijing.strftime('%Y-%m-%d %H:%M:%S'),
-                'status': reg.status,
-                'notes': reg.notes,
-                'user': user_info
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'phone': user.phone
+                },
+                'registered_at': registered_at_beijing,
+                'status': reg.status  # 确保正确返回状态
             })
         
         return jsonify({
             'activity': {
                 'id': activity.id,
                 'title': activity.title,
-                'start_time': start_time_beijing.strftime('%Y-%m-%d %H:%M:%S'),
-                'location': activity.location,
+                'start_time': start_time_beijing,
                 'capacity': activity.capacity,
                 'registered_count': activity.registered_count
             },
@@ -630,8 +628,8 @@ def get_registrations(activity_id):
         }), 200
         
     except Exception as e:
-        print(f"获取报名信息失败: {str(e)}")
-        return jsonify({'error': f'获取报名信息失败: {str(e)}'}), 500
+        print(f"获取活动报名列表失败: {str(e)}")
+        return jsonify({'error': '获取活动报名列表失败'}), 500
 
 # 系统配置管理
 @admin_bp.route('/admin/config/timeslots', methods=['GET'])

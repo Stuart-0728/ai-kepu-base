@@ -152,12 +152,32 @@ def get_activity_detail(activity_id):
         if 'user_id' in session:
             user_id = session['user_id']
             print(f"检查用户 {user_id} 是否报名活动 {activity_id}")
-            registration = Registration.query.filter_by(
+            
+            # 查询当前用户的报名记录
+            registrations = Registration.query.filter_by(
                 user_id=user_id,
-                activity_id=activity_id,
-                status='confirmed'
-            ).first()
-            is_registered = registration is not None
+                activity_id=activity_id
+            ).all()
+            
+            # 检查是否有confirmed状态的报名记录
+            for reg in registrations:
+                print(f"找到报名记录: id={reg.id}, 状态={reg.status}")
+                if reg.status == 'confirmed':
+                    is_registered = True
+                    break
+            
+            # 同时检查并清理已删除用户的报名记录
+            orphaned_registrations = Registration.query.join(
+                User, Registration.user_id == User.id, isouter=True
+            ).filter(
+                Registration.activity_id == activity_id,
+                Registration.status == 'confirmed',
+                User.id.is_(None)  # 用户不存在
+            ).all()
+            
+            if orphaned_registrations and len(orphaned_registrations) > 0:
+                print(f"发现{len(orphaned_registrations)}条已删除用户的报名记录，将在下次报名时处理")
+                    
             print(f"用户 {user_id} 报名状态: {is_registered}")
         
         now = get_beijing_time()
@@ -232,20 +252,41 @@ def register_activity(activity_id):
             print(f"活动名额已满: 已报名={activity.registered_count}, 容量={activity.capacity}")
             return jsonify({'error': '活动名额已满'}), 400
         
-        # 检查是否已报名
+        current_user_id = session['user_id']
+        
+        # 检查是否已报名 - 只考虑当前用户的报名记录
         existing_registration = Registration.query.filter_by(
-            user_id=session['user_id'],
+            user_id=current_user_id,
             activity_id=activity_id,
             status='confirmed'
         ).first()
         
         if existing_registration:
-            print(f"用户已报名此活动: user_id={session['user_id']}, activity_id={activity_id}")
+            print(f"用户已报名此活动: user_id={current_user_id}, activity_id={activity_id}")
             return jsonify({'error': '您已报名此活动'}), 400
+        
+        # 检查是否存在其他用户（可能已删除）的报名记录
+        # 如果存在，将其状态更新为cancelled，并减少活动报名人数
+        orphaned_registrations = Registration.query.join(
+            User, Registration.user_id == User.id, isouter=True
+        ).filter(
+            Registration.activity_id == activity_id,
+            Registration.status == 'confirmed',
+            User.id.is_(None)  # 用户不存在
+        ).all()
+        
+        if orphaned_registrations:
+            print(f"发现已删除用户的报名记录: {len(orphaned_registrations)} 条")
+            for reg in orphaned_registrations:
+                print(f"取消已删除用户的报名记录: registration_id={reg.id}, user_id={reg.user_id}")
+                reg.status = 'cancelled'
+                # 如果活动报名人数大于0，减少报名人数
+                if activity.registered_count > 0:
+                    activity.registered_count -= 1
         
         # 创建报名记录
         registration = Registration(
-            user_id=session['user_id'],
+            user_id=current_user_id,
             activity_id=activity_id,
             status='confirmed',
             notes=None
@@ -257,7 +298,7 @@ def register_activity(activity_id):
         db.session.add(registration)
         db.session.commit()
         
-        print(f"报名成功: user_id={session['user_id']}, activity_id={activity_id}")
+        print(f"报名成功: user_id={current_user_id}, activity_id={activity_id}")
         return jsonify({'message': '报名成功'}), 201
         
     except Exception as e:

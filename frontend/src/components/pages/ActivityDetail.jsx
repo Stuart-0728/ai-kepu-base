@@ -230,10 +230,14 @@ const ActivityDetail = () => {
     return null
   }
 
+  // 调试输出
+  console.log('当前活动状态:', activity);
+  console.log('是否已报名:', activity?.is_registered);
+
   const status = getActivityStatus()
-  const startDateTime = getFormattedDateTime(activity.start_time)
-  const endDateTime = getFormattedDateTime(activity.end_time)
-  const registrationDeadline = getFormattedDateTime(activity.registration_deadline)
+  const startDateTime = getFormattedDateTime(activity?.start_time)
+  const endDateTime = getFormattedDateTime(activity?.end_time)
+  const registrationDeadline = getFormattedDateTime(activity?.registration_deadline)
 
   return (
     <div className="min-h-screen py-20">
