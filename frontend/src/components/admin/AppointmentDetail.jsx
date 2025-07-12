@@ -9,6 +9,7 @@ import { AlertCircle, CheckCircle2, XCircle, Users, ClipboardList } from 'lucide
 import { Alert, AlertDescription } from '../ui/alert'
 import { toast } from 'sonner'
 import { API_BASE_URL } from '../../lib/utils'
+import { formatDate, formatDateTime } from '../../utils/dateUtils'
 
 const statusMap = {
   'pending': { label: '待审核', color: 'outline' },
@@ -39,11 +40,13 @@ const AppointmentDetail = () => {
         }
         
         const data = await response.json()
-        setAppointment(data)
-        setStatus(data.status)
-        setAdminNotes(data.admin_notes || '')
+        console.log('预约详情数据:', data)
+        setAppointment(data.appointment)
+        setStatus(data.appointment.status)
+        setAdminNotes(data.appointment.admin_notes || '')
         setLoading(false)
       } catch (err) {
+        console.error('获取预约详情错误:', err)
         setError(err.message)
         setLoading(false)
       }
@@ -73,7 +76,15 @@ const AppointmentDetail = () => {
       }
       
       toast.success('预约状态已更新')
-      navigate('/admin/dashboard')
+      // 不跳转，而是显示成功消息
+      const updatedResponse = await fetch(`${API_BASE_URL}/api/appointments/${id}`, {
+        credentials: 'include'
+      })
+      
+      if (updatedResponse.ok) {
+        const data = await updatedResponse.json()
+        setAppointment(data.appointment)
+      }
     } catch (err) {
       toast.error(err.message)
     } finally {
@@ -135,7 +146,7 @@ const AppointmentDetail = () => {
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground">预约日期</h3>
-                <p className="text-lg font-medium">{appointment.date}</p>
+                <p className="text-lg font-medium">{formatDate(appointment.date)}</p>
               </div>
               
               <div>
@@ -145,7 +156,7 @@ const AppointmentDetail = () => {
               
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground">预约时间</h3>
-                <p className="text-lg font-medium">{new Date(appointment.created_at).toLocaleString()}</p>
+                <p className="text-lg font-medium">{appointment.created_at ? formatDateTime(appointment.created_at) : '无'}</p>
               </div>
             </div>
           </div>
@@ -185,7 +196,7 @@ const AppointmentDetail = () => {
         <CardFooter className="flex justify-between border-t pt-4 mt-6 bg-white">
           <Button
             variant="outline"
-            onClick={() => navigate('/admin/dashboard')}
+            onClick={() => navigate('/admin/appointments')}
             disabled={updating}
           >
             返回

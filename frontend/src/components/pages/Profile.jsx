@@ -13,6 +13,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { API_BASE_URL } from '../../lib/utils'
 import { toast } from 'sonner'
 import { Badge } from '../ui/badge'
+import { formatDate, formatDateTime } from '../../utils/dateUtils'
 
 const statusMap = {
   'pending': { label: '待审核', color: 'outline' },
@@ -95,7 +96,8 @@ const Profile = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setSelectedAppointment(data);
+        console.log('用户预约详情数据:', data);
+        setSelectedAppointment(data.appointment);
       } else {
         toast.error('获取预约详情失败');
         console.error('获取预约详情失败: 服务器响应错误');
@@ -195,35 +197,26 @@ const Profile = () => {
     }
   }
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '未知时间'
-    const date = new Date(dateString)
-    return date.toLocaleDateString('zh-CN', {
-      timeZone: 'Asia/Shanghai',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+  // 使用从dateUtils导入的格式化方法
 
   const getStatusBadge = (status) => {
-    switch(status) {
-      case 'pending':
-        return <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500">待审核</span>
-      case 'approved':
-      case 'confirmed':
-        return <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500">已通过</span>
-      case 'rejected':
-        return <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500">已拒绝</span>
-      case 'cancelled':
-        return <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400">已取消</span>
-      case 'completed':
-        return <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-500">已完成</span>
-      default:
-        return <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400">未知状态</span>
-    }
+    const statusInfo = statusMap[status] || { 
+      label: status === 'approved' ? '已通过' : '未知状态', 
+      color: status === 'approved' ? 'default' : 'outline' 
+    };
+    
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs ${
+        status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500' :
+        status === 'confirmed' || status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500' :
+        status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500' :
+        status === 'cancelled' ? 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400' :
+        status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-500' :
+        'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+      }`}>
+        {statusInfo.label}
+      </span>
+    );
   }
 
   if (!isLoggedIn) {
@@ -395,7 +388,7 @@ const Profile = () => {
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
                               <div className="font-medium">
-                                {appointment.appointment_date} {appointment.appointment_time_slot}
+                                {formatDate(appointment.appointment_date)} {appointment.appointment_time_slot}
                               </div>
                               {getStatusBadge(appointment.status)}
                             </div>
@@ -499,7 +492,7 @@ const AppointmentDetailModal = ({ appointment, onClose }) => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">预约日期</p>
-                <p className="font-medium mt-1">{appointment.date}</p>
+                <p className="font-medium mt-1">{formatDate(appointment.date)}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">预约时间段</p>
@@ -511,7 +504,7 @@ const AppointmentDetailModal = ({ appointment, onClose }) => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">创建时间</p>
-                <p className="font-medium mt-1">{new Date(appointment.created_at).toLocaleString()}</p>
+                <p className="font-medium mt-1">{appointment.created_at ? formatDateTime(appointment.created_at) : '无'}</p>
               </div>
             </div>
             

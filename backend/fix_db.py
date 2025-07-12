@@ -1,7 +1,22 @@
 import os
+import sys
 import psycopg2
+from psycopg2 import sql
 from urllib.parse import urlparse
 from src.config import config as app_config
+
+# 确保当前目录在sys.path中
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
+
+# 数据库连接参数
+db_params = {
+    'dbname': 'kepu',
+    'user': 'luoyixin',
+    'password': '',
+    'host': 'localhost'
+}
 
 def get_db_connection():
     """获取PostgreSQL数据库连接"""
@@ -106,8 +121,50 @@ def update_time_slots():
     finally:
         conn.close()
 
+def fix_registrations_table():
+    """修复registrations表，添加缺少的notes字段"""
+    try:
+        # 连接到PostgreSQL数据库
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 检查notes字段是否存在
+        cursor.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'registrations' AND column_name = 'notes';
+        """)
+        
+        if cursor.fetchone() is None:
+            print("添加notes字段到registrations表...")
+            cursor.execute("""
+                ALTER TABLE registrations 
+                ADD COLUMN notes TEXT;
+            """)
+            conn.commit()
+            print("notes字段添加成功")
+        else:
+            print("notes字段已存在，无需添加")
+        
+        cursor.close()
+        conn.close()
+        
+    except Exception as e:
+        print(f"修复registrations表时出错: {e}")
+        return False
+    
+    return True
+
 if __name__ == "__main__":
+    print("开始修复数据库...")
     # 修复appointments表
     fix_appointments_table()
     # 更新时间段配置
-    update_time_slots() 
+    update_time_slots()
+    # 修复registrations表
+    success = fix_registrations_table()
+    
+    if success:
+        print("数据库修复完成")
+    else:
+        print("数据库修复失败") 
