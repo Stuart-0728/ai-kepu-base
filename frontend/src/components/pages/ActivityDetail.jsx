@@ -91,7 +91,10 @@ const ActivityDetail = () => {
       toast.success('报名成功！')
       
       // 刷新活动信息以更新报名状态
-      await fetchActivityDetail()
+      console.log('报名成功，刷新活动信息...')
+      setTimeout(() => {
+        fetchActivityDetail()
+      }, 500) // 添加短暂延迟，确保后端数据更新完成
     } catch (error) {
       console.error('报名失败:', error)
       toast.error('报名失败，请稍后重试')
@@ -116,7 +119,10 @@ const ActivityDetail = () => {
 
       if (response.ok) {
         toast.success('取消报名成功！')
-        await fetchActivityDetail() // 刷新活动信息
+        console.log('取消报名成功，刷新活动信息...')
+        setTimeout(() => {
+          fetchActivityDetail()
+        }, 500) // 添加短暂延迟，确保后端数据更新完成
       } else {
         console.error('取消报名失败:', data.error)
         toast.error(data.error || '取消报名失败')
