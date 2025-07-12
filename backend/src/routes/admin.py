@@ -61,13 +61,23 @@ def export_activity_registrations(activity_id):
         filename = f'activity_{activity_id}_registrations_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
         
         # 构建数据
-        rows = [{
-            'id': reg.id,
-            'username': user.username,
-            'email': user.email,
-            'phone': user.phone or '未提供',
-            'registered_at': reg.registered_at.strftime('%Y-%m-%d %H:%M:%S')
-        } for reg, user in registrations]
+        rows = []
+        beijing_tz = pytz.timezone('Asia/Shanghai')
+        
+        for reg, user in registrations:
+            # 将UTC时间转换为北京时间
+            registered_at_naive = reg.registered_at
+            if registered_at_naive.tzinfo is not None:
+                registered_at_naive = registered_at_naive.replace(tzinfo=None)
+            registered_at_beijing = beijing_tz.localize(registered_at_naive).replace(tzinfo=None)
+            
+            rows.append({
+                'id': reg.id,
+                'username': user.username,
+                'email': user.email,
+                'phone': user.phone or '未提供',
+                'registered_at': registered_at_beijing.strftime('%Y-%m-%d %H:%M:%S')
+            })
         
         # 导出为CSV
         if format_type == 'csv':
@@ -568,31 +578,54 @@ def get_registrations(activity_id):
         activity = Activity.query.get_or_404(activity_id)
         registrations = Registration.query.filter_by(activity_id=activity_id).all()
         
+        # 时区转换
+        beijing_tz = pytz.timezone('Asia/Shanghai')
+        
+        # 将活动时间转换为北京时间
+        start_time_naive = activity.start_time
+        if start_time_naive.tzinfo is not None:
+            start_time_naive = start_time_naive.replace(tzinfo=None)
+        start_time_beijing = beijing_tz.localize(start_time_naive).replace(tzinfo=None)
+        
+        registration_list = []
+        for reg in registrations:
+            # 将报名时间转换为北京时间
+            registered_at_naive = reg.registered_at
+            if registered_at_naive.tzinfo is not None:
+                registered_at_naive = registered_at_naive.replace(tzinfo=None)
+            registered_at_beijing = beijing_tz.localize(registered_at_naive).replace(tzinfo=None)
+            
+            user_info = None
+            if reg.user:
+                user_info = {
+                    'username': reg.user.username,
+                    'email': reg.user.email,
+                    'phone': reg.user.phone or '未提供'
+                }
+            
+            registration_list.append({
+                'id': reg.id,
+                'user_id': reg.user_id,
+                'registered_at': registered_at_beijing.strftime('%Y-%m-%d %H:%M:%S'),
+                'status': reg.status,
+                'notes': reg.notes,
+                'user': user_info
+            })
+        
         return jsonify({
             'activity': {
                 'id': activity.id,
                 'title': activity.title,
-                'start_time': activity.start_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'start_time': start_time_beijing.strftime('%Y-%m-%d %H:%M:%S'),
                 'location': activity.location,
                 'capacity': activity.capacity,
                 'registered_count': activity.registered_count
             },
-            'registrations': [
-                {
-                    'id': reg.id,
-                    'user_id': reg.user_id,
-                    'registered_at': reg.registered_at.strftime('%Y-%m-%d %H:%M:%S'),
-                    'status': reg.status,
-                    'notes': reg.notes,
-                    'user': {
-                        'username': reg.user.username,
-                        'email': reg.user.email
-                    } if reg.user else None
-                } for reg in registrations
-            ]
+            'registrations': registration_list
         }), 200
         
     except Exception as e:
+        print(f"获取报名信息失败: {str(e)}")
         return jsonify({'error': f'获取报名信息失败: {str(e)}'}), 500
 
 # 系统配置管理
