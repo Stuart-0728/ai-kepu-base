@@ -20,6 +20,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import { toast } from 'sonner'
 import { API_BASE_URL } from '../../lib/utils'
+import { formatDate, formatTime, formatDateTime } from '../../utils/dateUtils'
 
 const ActivityDetail = () => {
   const { id } = useParams()
@@ -78,14 +79,17 @@ const ActivityDetail = () => {
       })
 
       const data = await response.json()
-
-      if (response.ok) {
-        toast.success('报名成功！')
-        await fetchActivityDetail() // 刷新活动信息
-      } else {
+      
+      if (!response.ok) {
         console.error('报名失败:', data.error)
         toast.error(data.error || '报名失败')
+        return
       }
+      
+      toast.success('报名成功！')
+      
+      // 刷新活动信息以更新报名状态
+      await fetchActivityDetail()
     } catch (error) {
       console.error('报名失败:', error)
       toast.error('报名失败，请稍后重试')
@@ -134,12 +138,14 @@ const ActivityDetail = () => {
     return categories[category] || category
   }
 
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString)
+  // 使用自定义的日期格式化函数
+  const getFormattedDateTime = (dateString) => {
+    if (!dateString) return { date: '未知', time: '未知', full: '未知时间' };
+    
     return {
-      date: date.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' }),
-      time: date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Shanghai' }),
-      full: date.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
+      date: formatDate(dateString),
+      time: formatTime(dateString),
+      full: formatDateTime(dateString)
     }
   }
 
@@ -212,9 +218,9 @@ const ActivityDetail = () => {
   }
 
   const status = getActivityStatus()
-  const startDateTime = formatDateTime(activity.start_time)
-  const endDateTime = formatDateTime(activity.end_time)
-  const registrationDeadline = formatDateTime(activity.registration_deadline)
+  const startDateTime = getFormattedDateTime(activity.start_time)
+  const endDateTime = getFormattedDateTime(activity.end_time)
+  const registrationDeadline = getFormattedDateTime(activity.registration_deadline)
 
   return (
     <div className="min-h-screen py-20">

@@ -312,6 +312,14 @@ def delete_user(user_id):
         if user_id == session.get('user_id'):
             return jsonify({'error': '不能删除当前登录的账户'}), 400
         
+        # 先删除用户的所有关联记录
+        # 1. 删除用户的所有预约
+        Appointment.query.filter_by(user_id=user_id).delete()
+        
+        # 2. 删除用户的所有活动报名
+        Registration.query.filter_by(user_id=user_id).delete()
+        
+        # 3. 删除用户本身
         db.session.delete(user)
         db.session.commit()
         
