@@ -1,5 +1,5 @@
-import { Routes, Route } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { Routes, Route, useLocation } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
 // 组件导入
@@ -16,11 +16,14 @@ import Login from './components/pages/Login'
 import Register from './components/pages/Register'
 import Profile from './components/pages/Profile'
 import AdminDashboard from './components/pages/AdminDashboard'
+import { ScrollToTop as ScrollButton } from './components/ui/scroll-to-top'
+import ScrollToTop from './components/common/ScrollToTop'
 
 function App() {
   const [apiStatus, setApiStatus] = useState(null)
   const [apiCheckAttempted, setApiCheckAttempted] = useState(false)
-
+  const location = useLocation()
+  
   // 测试API连接
   useEffect(() => {
     const testApiConnection = async () => {
@@ -60,7 +63,8 @@ function App() {
   }, [apiCheckAttempted]);
 
   return (
-        <div className={`min-h-screen flex flex-col`}>
+        <div className={`min-h-screen flex flex-col route-container`}>
+            <ScrollToTop /> {/* 添加路由滚动组件 */}
             <Header />
           
           {apiStatus && !apiStatus.connected && (
@@ -88,6 +92,7 @@ function App() {
           </main>
           
           <Footer />
+          <ScrollButton />
         </div>
   )
 }

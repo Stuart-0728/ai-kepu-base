@@ -34,15 +34,34 @@ const Activities = () => {
   const [categories, setCategories] = useState([])
   const [error, setError] = useState(null)
 
-  // 组件挂载时滚动到顶部
+  // 组件挂载时滚动到顶部 - 使用更可靠的方法
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // 检测是否是iOS设备
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
+    // 使用setTimeout确保在DOM更新后执行滚动
+    setTimeout(() => {
+      // 将窗口滚动到顶部
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+      
+      // iOS设备可能需要额外处理
+      if (isIOS) {
+        // 使用多种方法确保滚动生效
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+        
+        // 再次尝试滚动，确保生效
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+        }, 100);
+      }
+    }, 0);
   }, []);
 
   useEffect(() => {
-    // 滚动到页面顶部
-    window.scrollTo(0, 0)
-    
     fetchCategories()
     fetchActivities()
   }, [])

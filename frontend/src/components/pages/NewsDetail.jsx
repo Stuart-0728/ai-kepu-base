@@ -14,12 +14,42 @@ const NewsDetail = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // 组件挂载时滚动到顶部 - 使用更可靠的方法
   useEffect(() => {
-    // 滚动到页面顶部
-    window.scrollTo(0, 0)
+    // 检测是否是iOS设备
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     
+    // 使用setTimeout确保在DOM更新后执行滚动
+    setTimeout(() => {
+      // 将窗口滚动到顶部
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+      
+      // iOS设备可能需要额外处理
+      if (isIOS) {
+        // 使用多种方法确保滚动生效
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+        
+        // 再次尝试滚动，确保生效
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+        }, 100);
+      }
+    }, 0);
+  }, [id]); // 当新闻ID变化时也执行
+  
+  useEffect(() => {
     const fetchNewsDetail = async () => {
       try {
+        // 先滚动到顶部，确保用户看到加载状态
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+        
         setLoading(true)
         const response = await fetch(`${API_BASE_URL}/api/news/${id}`)
         
@@ -32,6 +62,9 @@ const NewsDetail = () => {
         
         const data = await response.json()
         setNews(data.news)
+        
+        // 数据加载完成后再次确保滚动到顶部
+        setTimeout(() => window.scrollTo(0, 0), 100);
       } catch (err) {
         console.error('获取新闻详情失败:', err)
         setError(err.message || '获取新闻详情失败')
@@ -174,6 +207,16 @@ const NewsDetail = () => {
     })
   }
 
+  // 返回新闻列表并滚动到顶部
+  const goBackToList = () => {
+    navigate('/news');
+  };
+
+  // 手动滚动到顶部的函数，使用优化的scrollUtils
+  const handleScrollToTop = () => {
+    window.scrollTo(0, 0);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen py-20">
@@ -221,7 +264,7 @@ const NewsDetail = () => {
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
-          <Button variant="ghost" onClick={() => navigate('/news')} className="tech-border">
+          <Button variant="ghost" onClick={goBackToList} className="tech-border">
             <ArrowLeft className="mr-2 h-4 w-4" />
             返回新闻列表
           </Button>

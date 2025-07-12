@@ -43,11 +43,41 @@ const ActivityDetail = () => {
   // 判断当前用户是否为管理员
   const isAdmin = user && user.role === 'admin'
 
+  // 组件挂载时滚动到顶部 - 使用更可靠的方法
+  useEffect(() => {
+    // 检测是否是iOS设备
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
+    // 使用setTimeout确保在DOM更新后执行滚动
+    setTimeout(() => {
+      // 将窗口滚动到顶部
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+      
+      // iOS设备可能需要额外处理
+      if (isIOS) {
+        // 使用多种方法确保滚动生效
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+        
+        // 再次尝试滚动，确保生效
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+        }, 100);
+      }
+    }, 0);
+  }, [id]); // 当活动ID变化时也执行
+
   useEffect(() => {
     fetchActivityDetail()
-    // 页面加载时滚动到顶部
-    window.scrollTo(0, 0)
   }, [id])
+
+  // 返回活动列表并滚动到顶部
+  const goBackToList = () => {
+    navigate('/activities');
+  };
 
   // 手动检查用户是否已报名
   const checkRegistrationStatus = async () => {
@@ -78,6 +108,12 @@ const ActivityDetail = () => {
 
   const fetchActivityDetail = async () => {
     try {
+      // 先滚动到顶部，确保用户看到加载状态
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+      
       const response = await fetch(`${API_BASE_URL}/api/activities/${id}`)
       if (response.ok) {
         const data = await response.json()
@@ -89,6 +125,11 @@ const ActivityDetail = () => {
         if (isLoggedIn) {
           await checkRegistrationStatus();
         }
+        
+        // 数据加载完成后再次确保滚动到顶部
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+        }, 100);
       } else if (response.status === 404) {
         setError('活动不存在')
       } else {
@@ -294,7 +335,7 @@ const ActivityDetail = () => {
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
-          <Button variant="ghost" onClick={() => navigate('/activities')} className="tech-border">
+          <Button variant="ghost" onClick={goBackToList} className="tech-border">
             <ArrowLeft className="mr-2 h-4 w-4" />
             返回活动列表
           </Button>
