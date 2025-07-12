@@ -57,7 +57,8 @@ const Home = () => {
     if (!videoElement) return;
 
     const videoFile = theme === 'dark' ? 'dark.mp4' : 'light.mp4';
-    const fullVideoUrl = `${API_BASE_URL}/static/videos/${videoFile}`;
+    // 添加时间戳防止缓存
+    const fullVideoUrl = `${API_BASE_URL}/static/videos/${videoFile}?t=${new Date().getTime()}`;
     
     videoElement.src = fullVideoUrl;
     videoElement.load();

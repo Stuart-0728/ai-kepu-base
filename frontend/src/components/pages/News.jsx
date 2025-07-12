@@ -326,7 +326,7 @@ const News = () => {
                         {/* 类别标签放在图片左上角，使用半透明磨砂效果 */}
                         <Badge 
                           variant="category" 
-                          className="absolute top-3 left-3 px-2 py-0.5 text-xs"
+                          className="absolute top-3 left-3"
                         >
                           {getCategoryLabel(item.category) || '未分类'}
                         </Badge>

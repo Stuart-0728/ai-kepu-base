@@ -425,7 +425,7 @@ const Activities = () => {
                         {activity.category && (
                           <Badge 
                             variant="category" 
-                            className="absolute top-3 left-3 px-2 py-0.5 text-xs"
+                            className="absolute top-3 left-3"
                           >
                             {getCategoryLabel(activity.category)}
                           </Badge>
