@@ -19,31 +19,97 @@ def get_beijing_time():
     beijing_tz = pytz.timezone('Asia/Shanghai')
     return utc_now.replace(tzinfo=pytz.utc).astimezone(beijing_tz)
 
-def require_admin():
-    """检查是否为管理员"""
-    if 'user_id' not in session or session.get('user_role') != 'admin':
-        return False
-    return True
-
-# 验证管理员权限的装饰器
+# 装饰器：检查管理员权限
 def admin_required(f):
     def decorated_function(*args, **kwargs):
         print(f"检查管理员权限: session={session}")
-        
-        if 'user_id' not in session:
-            print(f"未登录，拒绝访问")
-            return jsonify({'error': '未登录'}), 401
-        
-        
-        if session.get('user_role') != 'admin':
-            print(f"用户角色不是admin: {session.get('user_role')}")
-            return jsonify({'error': '权限不足，需要管理员权限'}), 403
-        
+        if 'user_id' not in session or session.get('user_role') != 'admin':
+            return jsonify({'error': '权限不足'}), 403
         print(f"权限验证通过: user_id={session.get('user_id')}, role={session.get('user_role')}")
         return f(*args, **kwargs)
-    
     decorated_function.__name__ = f.__name__
     return decorated_function
+
+# 辅助函数：检查管理员权限
+def require_admin():
+    print(f"检查管理员权限: session={session}")
+    if 'user_id' not in session or session.get('user_role') != 'admin':
+        return False
+    print(f"权限验证通过: user_id={session.get('user_id')}, role={session.get('user_role')}")
+    return True
+
+# 导出活动报名表
+@admin_bp.route('/admin/activities/<int:activity_id>/export', methods=['GET'])
+@admin_required
+def export_activity_registrations(activity_id):
+    try:
+        format_type = request.args.get('format', 'csv')
+        
+        # 获取活动信息
+        activity = Activity.query.get_or_404(activity_id)
+        
+        # 获取该活动的所有报名记录
+        registrations = db.session.query(Registration, User).join(
+            User, Registration.user_id == User.id
+        ).filter(
+            Registration.activity_id == activity_id,
+            Registration.status == 'confirmed'
+        ).order_by(Registration.registered_at.asc()).all()
+        
+        # 定义字段
+        fields = ['id', 'username', 'email', 'phone', 'registered_at']
+        filename = f'activity_{activity_id}_registrations_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+        
+        # 构建数据
+        rows = [{
+            'id': reg.id,
+            'username': user.username,
+            'email': user.email,
+            'phone': user.phone or '未提供',
+            'registered_at': reg.registered_at.strftime('%Y-%m-%d %H:%M:%S')
+        } for reg, user in registrations]
+        
+        # 导出为CSV
+        if format_type == 'csv':
+            output = io.StringIO()
+            writer = csv.DictWriter(output, fieldnames=fields)
+            writer.writeheader()
+            writer.writerows(rows)
+            
+            # 创建内存文件
+            mem = io.BytesIO()
+            mem.write(output.getvalue().encode('utf-8-sig'))  # 使用UTF-8 with BOM以支持中文
+            mem.seek(0)
+            
+            return send_file(
+                mem,
+                mimetype='text/csv',
+                as_attachment=True,
+                download_name=f'{filename}.csv'
+            )
+            
+        # 导出为JSON
+        elif format_type == 'json':
+            output = json.dumps(rows, ensure_ascii=False, indent=2)
+            
+            # 创建内存文件
+            mem = io.BytesIO()
+            mem.write(output.encode('utf-8'))
+            mem.seek(0)
+            
+            return send_file(
+                mem,
+                mimetype='application/json',
+                as_attachment=True,
+                download_name=f'{filename}.json'
+            )
+            
+        else:
+            return jsonify({'error': f'不支持的导出格式: {format_type}'}), 400
+            
+    except Exception as e:
+        print(f"导出活动报名表失败: {str(e)}")
+        return jsonify({'error': f'导出活动报名表失败: {str(e)}'}), 500
 
 @admin_bp.route('/admin/dashboard', methods=['GET'])
 @admin_required
@@ -1045,3 +1111,23 @@ def upload_activity_image():
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500 
+
+# 删除活动
+@admin_bp.route('/admin/activities/<int:activity_id>', methods=['DELETE'])
+@admin_required
+def delete_activity(activity_id):
+    try:
+        activity = Activity.query.get_or_404(activity_id)
+        
+        # 先删除活动的所有报名记录
+        Registration.query.filter_by(activity_id=activity_id).delete()
+        
+        # 删除活动本身
+        db.session.delete(activity)
+        db.session.commit()
+        
+        return jsonify({'message': '活动删除成功'}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'删除活动失败: {str(e)}'}), 500 
