@@ -1,0 +1,41 @@
+# 腾讯云部署过程中遇到的问题及解决方案
+
+## 1. SSH连接问题
+- **问题**: SSH主机密钥验证失败
+- **解决方案**: 使用`ssh-keygen -R 119.29.168.57`删除旧的主机密钥，然后重新连接
+
+## 2. 前端构建问题
+- **问题**: 前端构建失败，可能是依赖问题
+- **解决方案**: 安装必要的依赖，特别是`@rollup/rollup-linux-x64-gnu`，然后使用`pnpm install`和`pnpm run build`
+
+## 3. PostgreSQL配置问题
+- **问题**: 数据库密码认证失败
+- **解决方案**: 修改PostgreSQL的pg_hba.conf配置文件，并使用`ALTER USER postgres WITH PASSWORD 'postgres'`设置密码
+
+## 4. 配置文件问题
+- **问题**: Flask应用配置缺少必要的数据库URI
+- **解决方案**: 更新config.py文件，确保包含正确的数据库连接信息和密钥
+
+## 5. Nginx配置语法错误
+- **问题**: Nginx配置中proxy_set_header指令参数数量无效
+- **解决方案**: 简化Nginx配置，避免使用复杂的变量和引号
+
+## 6. 导入路径问题
+- **问题**: Python导入路径错误，`from src.models`应该是`from backend.src.models`
+- **解决方案**: 修改所有导入语句，将`from src.`改为`from backend.src.`
+
+## 7. API路由问题
+- **问题**: API路由未正确配置，导致404错误
+- **解决方案**: 创建专门的API蓝图，并在应用工厂函数中注册
+
+## 8. 文件权限问题
+- **问题**: Nginx无法访问前端静态文件，显示"Permission denied"错误
+- **解决方案**: 修改文件权限，确保www-data用户组有权限访问前端文件
+
+## 9. 服务管理问题
+- **问题**: Gunicorn服务无法正常启动
+- **解决方案**: 创建systemd服务文件，配置正确的环境变量和工作目录
+
+## 10. 502 Bad Gateway错误
+- **问题**: Nginx无法连接到后端服务
+- **解决方案**: 确保后端服务正常运行，并且Nginx配置中的proxy_pass指向正确的地址和端口

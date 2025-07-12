@@ -1,0 +1,849 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+    --gradient-text: linear-gradient(to right, #3a7bd5, #00d2ff);
+    --gradient-hover: linear-gradient(to right, #00d2ff, #3a7bd5);
+    --glow-color: rgba(58, 123, 213, 0.4);
+    --tech-border-color: rgba(58, 123, 213, 0.3);
+    --nav-indicator: #3a7bd5;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --feature-bg: linear-gradient(135deg, rgba(58, 123, 213, 0.08) 0%, rgba(0, 210, 255, 0.08) 100%);
+    --button-shadow: 0 2px 8px rgba(58, 123, 213, 0.25);
+    --rainbow-gradient: linear-gradient(to right, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
+    --scroll-indicator-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+    --gradient-text: linear-gradient(to right, #00d2ff, #3a7bd5);
+    --gradient-hover: linear-gradient(to right, #3a7bd5, #00d2ff);
+    --glow-color: rgba(0, 210, 255, 0.5);
+    --tech-border-color: rgba(0, 210, 255, 0.2);
+    --nav-indicator: #00d2ff;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    --feature-bg: linear-gradient(135deg, rgba(58, 123, 213, 0.15) 0%, rgba(0, 210, 255, 0.15) 100%);
+    --button-shadow: 0 2px 8px rgba(0, 210, 255, 0.25);
+    --rainbow-gradient: linear-gradient(to right, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
+    --scroll-indicator-shadow: 0 0 10px rgba(0, 210, 255, 0.6);
+  }
+}
+
+/* 主题样式 */
+.dark-theme {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.light-theme {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+    background-image: 
+      radial-gradient(circle at 20% 30%, rgba(58, 123, 213, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(0, 210, 255, 0.03) 0%, transparent 50%);
+  }
+  
+  .dark body {
+    background-image: none;
+  }
+}
+
+/* 滚动指示器样式 */
+.scroll-indicator {
+  filter: drop-shadow(var(--scroll-indicator-shadow));
+  transition: all 0.3s ease;
+}
+
+.scroll-indicator:hover {
+  transform: translateY(2px);
+}
+
+.scroll-indicator-text {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+/* 反光效果 */
+.scroll-indicator svg {
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.8));
+}
+
+.dark .scroll-indicator svg {
+  filter: drop-shadow(0 0 5px rgba(0, 210, 255, 0.8));
+}
+
+/* 视频背景样式 */
+.video-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+  /* 确保视频始终填充整个容器 */
+  min-width: 100%;
+  min-height: 100%;
+  /* 在某些浏览器中提高性能 */
+  will-change: transform;
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 0;
+}
+
+/* 亮色模式下视频叠加层透明度降低 */
+.light-theme .video-overlay {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.video-control-btn {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  /* 确保按钮在所有设备上都能正常点击 */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.video-control-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.1);
+}
+
+.video-control-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--tech-border-color);
+}
+
+/* 视频背景容器 */
+.video-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+/* 科技感样式 */
+.gradient-text {
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 为明亮模式添加纯白色文字效果 */
+.light .home-title {
+  color: #ffffff !important;
+  text-shadow: 0 0 2px rgba(0,0,0,0.2);
+  font-weight: 700;
+}
+
+@keyframes gradient-animation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 确保在暗色模式下使用原有渐变文字 */
+.dark .home-title {
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  text-shadow: 0 0 3px rgba(0, 210, 255, 0.3);
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+
+.particles-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.particles-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(58, 123, 213, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 210, 255, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+  animation: float 6s ease-in-out infinite;
+}
+
+.grid-bg {
+  background-image: 
+    linear-gradient(rgba(58, 123, 213, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(58, 123, 213, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.tech-border {
+  border: 1px solid var(--tech-border-color);
+  box-shadow: 0 0 5px var(--tech-border-color);
+  transition: all 0.3s ease;
+}
+
+.tech-border:hover {
+  box-shadow: 0 0 10px var(--tech-border-color);
+  border-color: var(--tech-border-color);
+  transform: translateY(-2px);
+}
+
+/* 增强卡片样式 */
+.card {
+  box-shadow: var(--card-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* 特性区块背景 */
+.feature-block {
+  background-color: var(--feature-block-bg);
+  border: 1px solid var(--feature-block-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.feature-block:hover {
+  transform: translateY(-3px);
+}
+
+/* 特性图标容器 */
+.feature-icon-container {
+  background: linear-gradient(135deg, rgba(58, 123, 213, 0.2), rgba(0, 210, 255, 0.2));
+  border-radius: 50%;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+/* 科技感加载动画 */
+.tech-loading {
+  width: 50px;
+  height: 50px;
+  border: 3px solid var(--tech-border-color);
+  border-radius: 50%;
+  border-top-color: var(--nav-indicator);
+  animation: spin 1s ease-in-out infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 科技感背景 */
+.tech-bg {
+  background-color: rgba(58, 123, 213, 0.05);
+  background-image: 
+    linear-gradient(to right, rgba(58, 123, 213, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 210, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* 图片悬停放大效果 */
+.zoom-image {
+  overflow: hidden;
+}
+
+.zoom-image img {
+  transition: transform 0.5s ease;
+}
+
+.zoom-image:hover img {
+  transform: scale(1.05);
+}
+
+/* 标题下划线效果 */
+.underline-title {
+  position: relative;
+  display: inline-block;
+}
+
+.underline-title::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  transform: scaleX(0);
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background: var(--gradient-text);
+  transform-origin: bottom right;
+  transition: transform 0.3s ease-out;
+}
+
+.underline-title:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+/* 导航指示线 */
+.nav-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background-color: var(--nav-indicator);
+  transition: width 0.3s ease, left 0.3s ease;
+}
+
+/* 明亮模式下的标题背景 */
+.title-gradient-bg {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+.title-gradient-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(58, 123, 213, 0.1);
+  border-radius: 0.5rem;
+  z-index: -1;
+}
+
+.dark .title-gradient-bg::before {
+  display: none;
+}
+
+/* 首页标题背景样式 */
+.home-title-container {
+  display: inline-block;
+  position: relative;
+  padding: 1rem 2rem;
+  width: auto;
+}
+
+.home-title-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(58, 123, 213, 0.1);
+  border-radius: 0.5rem;
+  z-index: -1;
+}
+
+.dark .home-title-container::before {
+  display: none;
+}
+
+/* 首页英雄区域容器 */
+.home-hero-container {
+  position: relative;
+  width: 100%;
+  border-radius: 1rem;
+  z-index: 1;
+}
+
+.home-hero-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(58, 123, 213, 0.1);
+  border-radius: 1rem;
+  z-index: -1;
+}
+
+.dark .home-hero-container::before {
+  display: none;
+}
+
+/* 轮播图样式 */
+.hero-carousel {
+  position: relative;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.carousel-container {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.carousel-slides {
+  display: flex;
+  width: 300%;
+  animation: carousel 15s infinite;
+}
+
+.carousel-slides img {
+  width: 33.333%;
+  height: 400px;
+  object-fit: cover;
+  object-position: center;
+}
+
+@keyframes carousel {
+  0%, 30% {
+    transform: translateX(0);
+  }
+  33%, 63% {
+    transform: translateX(-33.333%);
+  }
+  66%, 96% {
+    transform: translateX(-66.666%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .video-background {
+    height: 100%;
+    width: auto;
+  }
+  
+  .video-control-btn {
+    bottom: 0.75rem;
+    left: 0.75rem;
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+/* 移动端优化 */
+@media (max-width: 640px) {
+  /* 确保标题与按钮不重叠 */
+  header .container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  /* 调整Logo区域在小屏幕上的宽度 */
+  header .w-\[240px\] {
+    width: auto;
+    max-width: 60%;
+  }
+  
+  /* 调整右侧按钮区域 */
+  header .justify-end {
+    gap: 0.25rem;
+  }
+  
+  /* 确保标题文字在小屏幕上不换行且适当缩小 */
+  header .whitespace-nowrap {
+    font-size: 0.7rem;
+  }
+  
+  /* 调整主题切换按钮在移动端的大小 */
+  header .rounded-full.h-12.w-12 {
+    height: 2.5rem;
+    width: 2.5rem;
+  }
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .video-background {
+    object-position: center;
+  }
+
+  .video-control-btn {
+    bottom: 1rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+  }
+
+  header .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .home-title {
+    font-size: 2.5rem;
+    line-height: 1.2;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  button, .button, [type="button"] {
+    font-size: 0.95rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  input, select, textarea {
+    font-size: 1rem;
+    padding: 0.5rem;
+  }
+  
+  /* 移动端导航菜单样式增强 */
+  .mobile-menu-container {
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  .mobile-menu-container nav {
+    padding: 0.75rem 1rem;
+  }
+  
+  .mobile-menu-container a {
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+  
+  .mobile-menu-container a:active {
+    transform: scale(0.98);
+  }
+  
+  /* 确保移动端按钮尺寸合适 */
+  .mobile-menu-button {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* 移动端图标尺寸调整 */
+  .mobile-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  /* 管理员后台移动端优化 */
+  .admin-mobile-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+  }
+  
+  /* 管理员后台表格响应式 */
+  .admin-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* 管理员后台卡片在移动端上的间距 */
+  .admin-card {
+    margin-bottom: 1rem;
+  }
+  
+  /* 管理员后台按钮组在移动端上的样式 */
+  .admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  /* 管理员后台表单在移动端上的样式 */
+  .admin-form-group {
+    margin-bottom: 1.25rem;
+  }
+  
+  /* 确保移动端上的下拉菜单可见 */
+  .dropdown-menu-mobile {
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+}
+
+/* 移动端操作按钮优化 */
+@media (max-width: 640px) {
+  /* 增大操作按钮尺寸 */
+  .action-button, 
+  button[size="icon"],
+  .button-icon {
+    min-height: 2.75rem !important;
+    min-width: 2.75rem !important;
+  }
+  
+  /* 增大图标尺寸 */
+  .action-button svg, 
+  button[size="icon"] svg,
+  .button-icon svg {
+    height: 1.25rem !important;
+    width: 1.25rem !important;
+  }
+  
+  /* 增加按钮间距 */
+  .action-buttons-group > * {
+    margin-right: 0.5rem;
+  }
+  
+  /* 确保按钮文字大小合适 */
+  button, .button {
+    font-size: 0.95rem !important;
+  }
+}
+
+/* iOS设备视频播放优化 */
+@supports (-webkit-touch-callout: none) {
+  /* iOS设备特定样式 */
+  .video-background {
+    /* 修复iOS视频全屏问题 */
+    position: absolute !important;
+    min-height: 100% !important;
+    min-width: 100% !important;
+    height: 100% !important;
+    width: 100% !important;
+    object-fit: cover !important;
+    top: 50% !important;
+    left: 50% !important;
+    -webkit-transform: translate(-50%, -50%) !important;
+    transform: translate(-50%, -50%) !important;
+  }
+  
+  /* iOS触摸交互优化 */
+  .video-control-btn,
+  button,
+  [role="button"],
+  .button,
+  a {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* 防止iOS橡皮筋效果导致的视频问题 */
+  html, body {
+    position: relative;
+    height: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
+  /* iOS Safari视频自动播放修复 */
+  video[autoplay]:not([muted]) {
+    display: none;
+  }
+  
+  video[autoplay][muted] {
+    display: block;
+  }
+}
+
+/* 触摸设备交互优化 */
+@media (hover: none) {
+  /* 移除悬停效果，改为活跃状态 */
+  .tech-border:hover {
+    transform: none;
+  }
+  
+  .tech-border:active {
+    transform: translateY(-1px);
+  }
+  
+  /* 优化触摸反馈 */
+  .card:active,
+  .button:active,
+  [role="button"]:active {
+    opacity: 0.8;
+    -webkit-transform: scale(0.98);
+    transform: scale(0.98);
+    transition: transform 0.1s ease, opacity 0.1s ease;
+  }
+  
+  /* 修复移动端点击延迟 */
+  a, button, [role="button"], .button, input[type="submit"] {
+    touch-action: manipulation;
+  }
+}
+
+/* 低端设备性能优化 */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--tech-border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--glow-color);
+}
+
+/* 页面过渡动画 */
+.page-transition-enter {
+  opacity: 0;
+  -webkit-transform: translateY(20px);
+  transform: translateY(20px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  -webkit-transform: translateY(0);
+  transform: translateY(0);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.page-transition-exit {
+  opacity: 1;
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* 卡片悬停效果 */
+.hover-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-card:hover {
+  -webkit-transform: translateY(-5px);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* 对话框样式增强 */
+.dialog-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.dialog-content {
+  border: 2px solid var(--border);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* 确保对话框在移动端有合适的尺寸 */
+@media (max-width: 640px) {
+  .dialog-content {
+    width: 90%;
+    max-width: 90%;
+    margin: 10% auto;
+    padding: 1rem;
+  }
+}
+

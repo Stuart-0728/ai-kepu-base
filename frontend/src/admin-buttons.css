@@ -1,0 +1,129 @@
+/* 管理员操作按钮样式 */
+
+/* 全局创建按钮文本处理 */
+button[title="创建新闻"],
+button[title="创建活动"],
+button[aria-label="创建新闻"],
+button[aria-label="创建活动"] {
+  font-size: 0 !important;
+  color: transparent !important;
+  line-height: 0 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-indent: -9999px !important;
+}
+
+button[title="创建新闻"]::after,
+button[title="创建活动"]::after,
+button[aria-label="创建新闻"]::after,
+button[aria-label="创建活动"]::after {
+  content: "" !important;
+}
+
+button[title="创建新闻"] svg,
+button[title="创建活动"] svg,
+button[aria-label="创建新闻"] svg,
+button[aria-label="创建活动"] svg {
+  transform: scale(1.2) !important;
+}
+
+/* 图标按钮基础样式 - 适用于所有设备 */
+.admin-action-button {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+  transition: all 0.2s ease-in-out !important;
+  overflow: hidden !important; /* 隐藏溢出内容 */
+}
+
+/* 特别处理主要操作按钮的宽度 */
+.admin-action-button-primary {
+  width: 100px !important; /* 增加宽度覆盖文字 */
+  min-width: 100px !important;
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border-color: hsl(var(--primary)) !important;
+}
+
+/* 隐藏按钮中的文本内容，只显示图标 */
+.admin-action-button span,
+.admin-action-button-primary span {
+  display: none !important;
+  font-size: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  overflow: hidden !important;
+}
+
+/* 危险操作按钮 */
+.admin-action-button.destructive {
+  color: hsl(var(--destructive)) !important;
+}
+
+/* 按钮悬停效果 */
+.admin-action-button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 5px rgba(0,0,0,0.1) !important;
+}
+
+/* 按钮点击效果 */
+.admin-action-button:active {
+  transform: translateY(1px) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+}
+
+/* 图标尺寸 - 适用于所有设备 */
+.admin-action-icon {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  color: currentColor !important;
+}
+
+/* 移动端特殊样式 */
+@media (max-width: 768px) {
+  .admin-action-button {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+  }
+  
+  .admin-action-button-primary {
+    width: 120px !important; /* 移动端更宽 */
+    min-width: 120px !important;
+  }
+  
+  .admin-action-icon {
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px !important;
+    min-height: 22px !important;
+  }
+}
+
+/* 覆盖shadcn默认样式 */
+button[size="icon"].admin-action-button {
+  width: inherit !important;
+  height: inherit !important;
+  min-width: inherit !important;
+  min-height: inherit !important;
+} 
+
+/* 确保按钮中只显示图标，不显示文字 */
+.admin-action-button > :not(svg),
+.admin-action-button-primary > :not(svg) {
+  display: none !important;
+} 
