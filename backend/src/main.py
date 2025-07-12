@@ -1,3 +1,4 @@
+import pytz
 import os
 import sys
 # DON'T CHANGE THIS !!!
@@ -29,6 +30,16 @@ if not os.path.exists(static_folder):
     os.makedirs(static_folder)
 
 def create_app(config_name='default'):
+    # 设置默认时区为北京时间
+    import os
+    os.environ['TZ'] = 'Asia/Shanghai'
+    try:
+        import time
+        time.tzset()
+    except AttributeError:
+        # Windows不支持tzset
+        pass
+
     app = Flask(__name__, static_folder=None)  # 禁用默认的静态文件处理
     
     # 从配置对象加载配置
@@ -40,28 +51,72 @@ def create_app(config_name='default'):
     # 额外配置
     app.config.update(
         SESSION_COOKIE_HTTPONLY=True,
-        SESSION_COOKIE_SECURE=False if config_name == 'development' else True,  # 开发环境中设为False，生产环境应设为True
-        SESSION_COOKIE_SAMESITE='Lax',
+        SESSION_COOKIE_SECURE=False,  # 在HTTP环境下使用Cookie
+        SESSION_COOKIE_SAMESITE=None, # 允许跨站请求发送Cookie
+        SESSION_COOKIE_DOMAIN=None,   # 不限制域名
+        SESSION_COOKIE_PATH="/",
     )
     
     # 确保添加了User模型的方法
     add_user_methods()
     
-    # 配置CORS，允许所有来源的请求，包括Cookie
+    # 配置CORS，允许特定来源的请求，包括Cookie
+    allowed_origins = [
+        "http://119.29.168.57", 
+        "https://119.29.168.57"
+    ]
+    
+    # 在开发环境中添加本地开发服务器
+    if config_name == 'development':
+        allowed_origins.extend([
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://localhost:5175",
+            "http://localhost:5176",
+            "http://localhost:5177",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:5174",
+            "http://127.0.0.1:5175",
+            "http://127.0.0.1:5176",
+            "http://127.0.0.1:5177",
+            "http://172.20.10.3:5173",
+            "http://172.20.10.3:5174",
+            "http://172.20.10.3:5175",
+            "http://172.20.10.3:5176",
+            "http://172.20.10.3:5177"
+        ])
+    
     CORS(app, 
-         resources={r"/*": {"origins": "*"}}, 
+         resources={r"/*": {"origins": allowed_origins}}, 
          supports_credentials=True,
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-         allow_headers=["Content-Type", "Authorization"],
+         allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
          expose_headers=["Content-Type", "Authorization"]
     )
+    
+    # 添加CORS预检请求处理
+    @app.after_request
+    def after_request(response):
+        # 获取请求的Origin
+        origin = request.headers.get('Origin')
+        
+        # 如果Origin在允许的列表中，设置CORS头
+        if origin in allowed_origins:
+            response.headers.add('Access-Control-Allow-Origin', origin)
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin')
+            response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+            response.headers.add('Access-Control-Allow-Credentials', 'true')
+        
+        return response
     
     # 初始化数据库
     db.init_app(app)
     migrate.init_app(app, db)
     
-    with app.app_context():
-        db.create_all()
+    # 在生产环境中不自动创建表，避免与已有表冲突
+    if config_name == 'development':
+        with app.app_context():
+            db.create_all()
     
     # API测试端点
     @app.route('/api/test')
@@ -207,6 +262,17 @@ def create_app(config_name='default'):
     return app
 
 # 创建应用实例
+
+# 设置默认时区为北京时间
+import os
+os.environ['TZ'] = 'Asia/Shanghai'
+try:
+    import time
+    time.tzset()
+except AttributeError:
+    # Windows不支持tzset
+    pass
+
 app = create_app(os.environ.get('FLASK_ENV', 'development'))
 
 if __name__ == '__main__':

@@ -59,7 +59,7 @@ export default defineConfig(({ mode }) => {
             });
             
             proxy.on('proxyReq', (proxyReq, req, _res) => {
-              console.log(`发送请求到目标服务器: ${req.method} ${req.url}`);
+              console.log(`发送代理请求: ${req.method} ${req.url} 到 ${apiUrl}`);
               // 确保cookie正确传递
               if (req.headers.cookie) {
                 proxyReq.setHeader('Cookie', req.headers.cookie);

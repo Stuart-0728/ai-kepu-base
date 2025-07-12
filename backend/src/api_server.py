@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 app = create_app(os.environ.get('FLASK_ENV', 'production'))
 
 if __name__ == '__main__':
-    # 获取端口，默认5000
-    port = int(os.environ.get('PORT', 5000))
+    # 获取端口，默认5002
+    port = int(os.environ.get('PORT', 5002))
     logger.info(f"启动API服务器，端口: {port}")
-    app.run(host='0.0.0.0', port=port) 
+    app.run(host='0.0.0.0', port=port, debug=False) # 在生产环境中禁用调试模式 

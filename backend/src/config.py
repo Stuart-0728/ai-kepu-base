@@ -2,11 +2,25 @@ import os
 from urllib.parse import urlparse
 
 class Config:
+
+    # 设置PostgreSQL时区为Asia/Shanghai
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'connect_args': {
+            'options': '-c timezone=Asia/Shanghai'
+        }
+    }
+    
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev_key_please_change_in_production')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # 添加会话持久性配置
     SESSION_PERMANENT = True
     PERMANENT_SESSION_LIFETIME = 86400  # 24小时
+    # 会话Cookie配置
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SECURE = False  # 在HTTP环境下使用Cookie
+    SESSION_COOKIE_SAMESITE = None  # 允许跨站请求发送Cookie
+    SESSION_COOKIE_DOMAIN = None  # 不限制域名
+    SESSION_COOKIE_PATH = "/"
 
     @staticmethod
     def get_database_url(url):

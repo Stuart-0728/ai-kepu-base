@@ -9,6 +9,10 @@ const isDevelopment = import.meta.env.MODE === 'development';
 const apiUrl = import.meta.env.VITE_API_URL || (isDevelopment ? 'http://localhost:5002' : '');
 export const API_BASE_URL = apiUrl;
 
+// 配置axios默认设置，确保跨域请求发送凭证
+import axios from 'axios';
+axios.defaults.withCredentials = true;
+
 /**
  * 应用程序配置
  */
