@@ -39,26 +39,44 @@ const Activities = () => {
     // 检测是否是iOS设备
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     
-    // 使用setTimeout确保在DOM更新后执行滚动
-    setTimeout(() => {
-      // 将窗口滚动到顶部
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
+    const scrollToTopWithFallbacks = () => {
+      // 尝试使用平滑滚动
+      try {
+        window.scrollTo({
+          top: 0,
+          behavior: 'auto' // 在iOS上使用'auto'而不是'smooth'以确保立即滚动
+        });
+      } catch (e) {
+        // 回退到传统方法
+        window.scrollTo(0, 0);
+      }
       
-      // iOS设备可能需要额外处理
+      // iOS设备需要额外处理
       if (isIOS) {
         // 使用多种方法确保滚动生效
         document.body.scrollTop = 0;
         document.documentElement.scrollTop = 0;
         
-        // 再次尝试滚动，确保生效
+        // 多次尝试滚动，确保生效
         setTimeout(() => {
           window.scrollTo(0, 0);
-        }, 100);
+          document.body.scrollTop = 0;
+          document.documentElement.scrollTop = 0;
+        }, 50);
+        
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          document.body.scrollTop = 0;
+          document.documentElement.scrollTop = 0;
+        }, 150);
       }
-    }, 0);
+    };
+    
+    // 立即执行一次
+    scrollToTopWithFallbacks();
+    
+    // 再次延迟执行，确保在DOM更新后滚动
+    setTimeout(scrollToTopWithFallbacks, 0);
   }, []);
 
   useEffect(() => {
@@ -406,8 +424,8 @@ const Activities = () => {
                         {/* 类别标签放在图片左上角，使用半透明磨砂效果 */}
                         {activity.category && (
                           <Badge 
-                            variant="outline" 
-                            className="absolute top-3 left-3 bg-white/70 backdrop-blur-sm border border-primary/30 text-primary px-2 py-0.5 text-xs"
+                            variant="category" 
+                            className="absolute top-3 left-3 px-2 py-0.5 text-xs"
                           >
                             {getCategoryLabel(activity.category)}
                           </Badge>
