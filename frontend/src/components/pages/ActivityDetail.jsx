@@ -1,35 +1,44 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Badge } from '../ui/badge'
-import { Button } from '../ui/button'
-import { 
-  Calendar, 
-  MapPin, 
-  Users, 
-  Clock, 
-  User,
+import { motion } from 'framer-motion'
+import { toast } from 'sonner'
+import { useAuth } from '../../contexts/AuthContext'
+import { API_BASE_URL } from '../../config'
+import { formatDate, formatTime, formatDateTime } from '../../utils/dateUtils'
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card"
+import { Button } from "../../components/ui/button"
+import { Badge } from "../../components/ui/badge"
+
+import {
   ArrowLeft,
+  Calendar,
   CheckCircle,
+  Clock,
+  MapPin,
+  Settings,
+  User,
+  Users,
   XCircle,
   AlertCircle,
-  Settings,
   Sparkles
 } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { useAuth } from '../../contexts/AuthContext'
-import { toast } from 'sonner'
-import { API_BASE_URL } from '../../lib/utils'
-import { formatDate, formatTime, formatDateTime } from '../../utils/dateUtils'
 
 const ActivityDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user, isLoggedIn } = useAuth()
+  const { isLoggedIn, user } = useAuth()
+  
   const [activity, setActivity] = useState(null)
   const [loading, setLoading] = useState(true)
   const [registering, setRegistering] = useState(false)
   const [error, setError] = useState(null)
+  const [isRegistered, setIsRegistered] = useState(false)
   
   // 判断当前用户是否为管理员
   const isAdmin = user && user.role === 'admin'
@@ -40,6 +49,33 @@ const ActivityDetail = () => {
     window.scrollTo(0, 0)
   }, [id])
 
+  // 手动检查用户是否已报名
+  const checkRegistrationStatus = async () => {
+    if (!isLoggedIn) return false;
+    
+    try {
+      // 获取用户的所有报名记录
+      const response = await fetch(`${API_BASE_URL}/api/user/registrations`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // 检查是否有当前活动的报名记录
+        const registered = data.registrations.some(reg => 
+          reg.activity.id === parseInt(id)
+        );
+        console.log(`手动检查报名状态: ${registered ? '已报名' : '未报名'}`);
+        setIsRegistered(registered);
+        return registered;
+      }
+    } catch (error) {
+      console.error('检查报名状态失败:', error);
+    }
+    
+    return false;
+  }
+
   const fetchActivityDetail = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/activities/${id}`)
@@ -48,6 +84,11 @@ const ActivityDetail = () => {
         console.log('获取活动详情成功:', data)
         console.log('活动报名状态:', data.activity.is_registered)
         setActivity(data.activity)
+        
+        // 手动检查报名状态，不依赖后端返回的is_registered字段
+        if (isLoggedIn) {
+          await checkRegistrationStatus();
+        }
       } else if (response.status === 404) {
         setError('活动不存在')
       } else {
@@ -92,8 +133,10 @@ const ActivityDetail = () => {
       
       // 刷新活动信息以更新报名状态
       console.log('报名成功，刷新活动信息...')
-      setTimeout(() => {
-        fetchActivityDetail()
+      setTimeout(async () => {
+        await fetchActivityDetail()
+        // 强制设置报名状态为true
+        setIsRegistered(true)
       }, 500) // 添加短暂延迟，确保后端数据更新完成
     } catch (error) {
       console.error('报名失败:', error)
@@ -120,8 +163,10 @@ const ActivityDetail = () => {
       if (response.ok) {
         toast.success('取消报名成功！')
         console.log('取消报名成功，刷新活动信息...')
-        setTimeout(() => {
-          fetchActivityDetail()
+        setTimeout(async () => {
+          await fetchActivityDetail()
+          // 强制设置报名状态为false
+          setIsRegistered(false)
         }, 500) // 添加短暂延迟，确保后端数据更新完成
       } else {
         console.error('取消报名失败:', data.error)
@@ -232,7 +277,7 @@ const ActivityDetail = () => {
 
   // 调试输出
   console.log('当前活动状态:', activity);
-  console.log('是否已报名:', activity?.is_registered);
+  console.log('是否已报名:', isRegistered);
 
   const status = getActivityStatus()
   const startDateTime = getFormattedDateTime(activity?.start_time)
@@ -362,7 +407,7 @@ const ActivityDetail = () => {
               <div className="pt-6 border-t">
                 <div className="flex flex-col sm:flex-row sm:justify-between items-center gap-4">
                   <div className="text-center sm:text-left">
-                    {activity.is_registered ? (
+                    {isRegistered ? (
                       <div className="flex items-center text-green-500">
                         <CheckCircle className="h-5 w-5 mr-2" />
                         <span className="font-medium">您已报名此活动</span>
@@ -387,7 +432,7 @@ const ActivityDetail = () => {
                     <Settings className="h-4 w-4 mr-2" />
                     管理活动
                   </Button>
-                ) : activity.is_registered ? (
+                ) : isRegistered ? (
                   <Button 
                     variant="outline" 
                     onClick={handleCancelRegistration}
