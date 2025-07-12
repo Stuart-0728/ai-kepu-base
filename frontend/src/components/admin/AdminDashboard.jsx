@@ -266,12 +266,12 @@ const ActivityRegistrationsDetail = () => {
                   <TableBody>
                     {registrations.map((reg) => (
                       <TableRow key={reg.id}>
-                        <TableCell>{reg.user_name}</TableCell>
-                        <TableCell>{reg.contact_info || '未提供'}</TableCell>
-                        <TableCell>{formatDate(reg.registration_time)} {formatTime(reg.registration_time)}</TableCell>
+                        <TableCell>{reg.user?.username || '未知用户'}</TableCell>
+                        <TableCell>{reg.user?.email || reg.user?.phone || '未提供'}</TableCell>
+                        <TableCell>{formatDate(reg.registered_at)} {formatTime(reg.registered_at)}</TableCell>
                         <TableCell>
-                          <Badge variant={reg.status === 'registered' ? 'default' : 'outline'}>
-                            {reg.status === 'registered' ? '已报名' : '已取消'}
+                          <Badge variant={reg.status === 'confirmed' ? 'default' : 'outline'}>
+                            {reg.status === 'confirmed' ? '已报名' : '已取消'}
                           </Badge>
                         </TableCell>
                       </TableRow>
