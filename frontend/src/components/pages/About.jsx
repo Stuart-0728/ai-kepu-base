@@ -280,7 +280,7 @@ const About = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    ai-base@cqnu.edu.cn<br />
+                    20131184@cqnu.edu.cn<br />
                     欢迎咨询和建议
                   </p>
                 </CardContent>

@@ -95,7 +95,7 @@ const Footer = () => {
               </li>
               <li className="flex items-center space-x-2 text-muted-foreground">
                 <Mail className="h-4 w-4 text-primary" />
-                <span>ai-base@cqnu.edu.cn</span>
+                <span>20131184@cqnu.edu.cn</span>
               </li>
             </ul>
           </div>
@@ -158,6 +158,9 @@ const Footer = () => {
               <span>|</span>
               <span>渝ICP备xxxxxxxx号</span>
             </div>
+          </div>
+          <div className="mt-4 text-center text-xs text-muted-foreground">
+            网站设计/技术支持：罗一鑫｜联系方式：2023051101095@stu.cqnu.edu.cn
           </div>
         </div>
       </div>

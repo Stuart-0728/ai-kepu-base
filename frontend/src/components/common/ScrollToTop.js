@@ -12,23 +12,45 @@ const ScrollToTop = () => {
     // 检测是否是iOS设备
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     
-    // 使用 setTimeout 确保在DOM更新后执行滚动
-    setTimeout(() => {
-      // 将窗口滚动到顶部
-      window.scrollTo(0, 0);
+    const scrollToTopWithFallbacks = () => {
+      // 尝试使用平滑滚动
+      try {
+        window.scrollTo({
+          top: 0,
+          behavior: 'auto' // 在iOS上使用'auto'而不是'smooth'以确保立即滚动
+        });
+      } catch (e) {
+        // 回退到传统方法
+        window.scrollTo(0, 0);
+      }
       
-      // iOS设备可能需要额外处理
+      // iOS设备需要额外处理
       if (isIOS) {
         // 使用多种方法确保滚动生效
         document.body.scrollTop = 0;
         document.documentElement.scrollTop = 0;
         
-        // 再次尝试滚动，确保生效
+        // 多次尝试滚动，确保生效
         setTimeout(() => {
           window.scrollTo(0, 0);
-        }, 100);
+          document.body.scrollTop = 0;
+          document.documentElement.scrollTop = 0;
+        }, 50);
+        
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          document.body.scrollTop = 0;
+          document.documentElement.scrollTop = 0;
+        }, 150);
       }
-    }, 0);
+    };
+    
+    // 立即执行一次
+    scrollToTopWithFallbacks();
+    
+    // 再次延迟执行，确保在DOM更新后滚动
+    setTimeout(scrollToTopWithFallbacks, 0);
+    
   }, [pathname]); // 依赖项是 pathname
 
   // 这个组件没有视觉输出，它只是一个功能性组件
