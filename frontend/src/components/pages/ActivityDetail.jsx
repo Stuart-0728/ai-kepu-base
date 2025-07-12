@@ -45,6 +45,7 @@ const ActivityDetail = () => {
       const response = await fetch(`${API_BASE_URL}/api/activities/${id}`)
       if (response.ok) {
         const data = await response.json()
+        console.log('获取活动详情成功:', data)
         setActivity(data.activity)
       } else if (response.status === 404) {
         setError('活动不存在')
@@ -78,11 +79,11 @@ const ActivityDetail = () => {
         })
       })
 
-      const data = await response.json()
-      
       if (!response.ok) {
+        const data = await response.json()
         console.error('报名失败:', data.error)
         toast.error(data.error || '报名失败')
+        setRegistering(false)
         return
       }
       
@@ -142,10 +143,15 @@ const ActivityDetail = () => {
   const getFormattedDateTime = (dateString) => {
     if (!dateString) return { date: '未知', time: '未知', full: '未知时间' };
     
-    return {
-      date: formatDate(dateString),
-      time: formatTime(dateString),
-      full: formatDateTime(dateString)
+    try {
+      return {
+        date: formatDate(dateString),
+        time: formatTime(dateString),
+        full: formatDateTime(dateString)
+      }
+    } catch (error) {
+      console.error('日期格式化错误:', error);
+      return { date: '未知', time: '未知', full: '未知时间' };
     }
   }
 
