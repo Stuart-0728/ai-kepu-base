@@ -48,16 +48,15 @@ def export_activity_registrations(activity_id):
         # 获取活动信息
         activity = Activity.query.get_or_404(activity_id)
         
-        # 获取该活动的所有报名记录
+        # 获取该活动的所有报名记录，包括已确认和已取消的
         registrations = db.session.query(Registration, User).join(
             User, Registration.user_id == User.id
         ).filter(
-            Registration.activity_id == activity_id,
-            Registration.status == 'confirmed'
+            Registration.activity_id == activity_id
         ).order_by(Registration.registered_at.asc()).all()
         
         # 定义字段
-        fields = ['id', 'username', 'email', 'phone', 'registered_at']
+        fields = ['id', 'username', 'email', 'phone', 'registered_at', 'status']
         filename = f'activity_{activity_id}_registrations_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
         
         # 构建数据
@@ -69,14 +68,17 @@ def export_activity_registrations(activity_id):
             registered_at_naive = reg.registered_at
             if registered_at_naive.tzinfo is not None:
                 registered_at_naive = registered_at_naive.replace(tzinfo=None)
-            registered_at_beijing = beijing_tz.localize(registered_at_naive).replace(tzinfo=None)
+            # 先添加UTC时区信息，再转换为北京时区
+            registered_at_utc = pytz.utc.localize(registered_at_naive)
+            registered_at_beijing = registered_at_utc.astimezone(beijing_tz)
             
             rows.append({
                 'id': reg.id,
                 'username': user.username,
                 'email': user.email,
                 'phone': user.phone or '未提供',
-                'registered_at': registered_at_beijing.strftime('%Y-%m-%d %H:%M:%S')
+                'registered_at': registered_at_beijing.strftime('%Y-%m-%d %H:%M:%S'),
+                'status': '已报名' if reg.status == 'confirmed' else '已取消'
             })
         
         # 导出为CSV
@@ -576,6 +578,7 @@ def update_appointment(appointment_id):
 def get_registrations(activity_id):
     try:
         activity = Activity.query.get_or_404(activity_id)
+        # 获取所有报名记录，包括已确认和已取消的
         registrations = Registration.query.filter_by(activity_id=activity_id).all()
         
         # 时区转换
@@ -585,7 +588,8 @@ def get_registrations(activity_id):
         start_time_naive = activity.start_time
         if start_time_naive.tzinfo is not None:
             start_time_naive = start_time_naive.replace(tzinfo=None)
-        start_time_beijing = beijing_tz.localize(start_time_naive).replace(tzinfo=None)
+        start_time_utc = pytz.utc.localize(start_time_naive)
+        start_time_beijing = start_time_utc.astimezone(beijing_tz)
         
         registration_list = []
         for reg in registrations:
@@ -593,7 +597,8 @@ def get_registrations(activity_id):
             registered_at_naive = reg.registered_at
             if registered_at_naive.tzinfo is not None:
                 registered_at_naive = registered_at_naive.replace(tzinfo=None)
-            registered_at_beijing = beijing_tz.localize(registered_at_naive).replace(tzinfo=None)
+            registered_at_utc = pytz.utc.localize(registered_at_naive)
+            registered_at_beijing = registered_at_utc.astimezone(beijing_tz)
             
             user_info = None
             if reg.user:
