@@ -3,6 +3,7 @@ from src.models.database import db, Activity, Registration, User
 from datetime import datetime, date
 import math
 import pytz
+from sqlalchemy import text
 
 activities_bp = Blueprint('activities', __name__)
 
@@ -153,30 +154,33 @@ def get_activity_detail(activity_id):
             user_id = session['user_id']
             print(f"检查用户 {user_id} 是否报名活动 {activity_id}")
             
-            # 查询当前用户的报名记录
-            registrations = Registration.query.filter_by(
-                user_id=user_id,
-                activity_id=activity_id
-            ).all()
-            
-            # 检查是否有confirmed状态的报名记录
-            for reg in registrations:
-                print(f"找到报名记录: id={reg.id}, 状态={reg.status}")
-                if reg.status == 'confirmed':
-                    is_registered = True
-                    break
-            
-            # 同时检查并清理已删除用户的报名记录
-            orphaned_registrations = Registration.query.join(
-                User, Registration.user_id == User.id, isouter=True
-            ).filter(
-                Registration.activity_id == activity_id,
-                Registration.status == 'confirmed',
-                User.id.is_(None)  # 用户不存在
-            ).all()
-            
-            if orphaned_registrations and len(orphaned_registrations) > 0:
-                print(f"发现{len(orphaned_registrations)}条已删除用户的报名记录，将在下次报名时处理")
+            # 直接查询数据库获取用户的报名记录
+            # 使用原始SQL查询，避免字段顺序问题
+            with db.engine.connect() as conn:
+                result = conn.execute(
+                    text(f"""
+                    SELECT * FROM registrations 
+                    WHERE user_id = {user_id} 
+                    AND activity_id = {activity_id}
+                    """)
+                )
+                registrations = result.fetchall()
+                
+                # 检查是否有confirmed状态的报名记录
+                for reg in registrations:
+                    print(f"找到报名记录: id={reg[0]}, 用户ID={reg[1]}, 活动ID={reg[2]}, 状态={reg[3]}, 时间={reg[4]}")
+                    # 检查状态字段，可能在第3列或第4列
+                    status = None
+                    # 尝试确定哪个字段是状态
+                    if reg[3] == 'confirmed' or reg[3] == 'cancelled':
+                        status = reg[3]
+                    elif reg[4] == 'confirmed' or reg[4] == 'cancelled':
+                        status = reg[4]
+                    
+                    if status == 'confirmed':
+                        is_registered = True
+                        print(f"用户已报名此活动，状态为confirmed")
+                        break
                     
             print(f"用户 {user_id} 报名状态: {is_registered}")
         
@@ -254,14 +258,32 @@ def register_activity(activity_id):
         
         current_user_id = session['user_id']
         
-        # 检查是否已报名 - 只考虑当前用户的报名记录
-        existing_registration = Registration.query.filter_by(
-            user_id=current_user_id,
-            activity_id=activity_id,
-            status='confirmed'
-        ).first()
+        # 使用原始SQL查询检查用户是否已报名
+        is_registered = False
+        with db.engine.connect() as conn:
+            result = conn.execute(
+                text(f"""
+                SELECT * FROM registrations 
+                WHERE user_id = {current_user_id} 
+                AND activity_id = {activity_id}
+                """)
+            )
+            registrations = result.fetchall()
+            
+            for reg in registrations:
+                print(f"找到报名记录: id={reg[0]}, 用户ID={reg[1]}, 活动ID={reg[2]}, 状态={reg[3]}, 时间={reg[4]}")
+                # 检查状态字段，可能在第3列或第4列
+                status = None
+                if reg[3] == 'confirmed' or reg[3] == 'cancelled':
+                    status = reg[3]
+                elif reg[4] == 'confirmed' or reg[4] == 'cancelled':
+                    status = reg[4]
+                
+                if status == 'confirmed':
+                    is_registered = True
+                    break
         
-        if existing_registration:
+        if is_registered:
             print(f"用户已报名此活动: user_id={current_user_id}, activity_id={activity_id}")
             return jsonify({'error': '您已报名此活动'}), 400
         
@@ -312,17 +334,43 @@ def cancel_registration(activity_id):
         return jsonify({'error': '请先登录'}), 401
     
     try:
-        registration = Registration.query.filter_by(
-            user_id=session['user_id'],
-            activity_id=activity_id,
-            status='confirmed'
-        ).first()
+        current_user_id = session['user_id']
         
-        if not registration:
-            print(f"取消报名失败，未找到报名记录: user_id={session['user_id']}, activity_id={activity_id}")
+        # 使用原始SQL查询查找用户的报名记录
+        registration_id = None
+        with db.engine.connect() as conn:
+            result = conn.execute(
+                text(f"""
+                SELECT * FROM registrations 
+                WHERE user_id = {current_user_id} 
+                AND activity_id = {activity_id}
+                """)
+            )
+            registrations = result.fetchall()
+            
+            for reg in registrations:
+                print(f"找到报名记录: id={reg[0]}, 用户ID={reg[1]}, 活动ID={reg[2]}, 状态={reg[3]}, 时间={reg[4]}")
+                # 检查状态字段，可能在第3列或第4列
+                status = None
+                if reg[3] == 'confirmed' or reg[3] == 'cancelled':
+                    status = reg[3]
+                    status_column = 3
+                elif reg[4] == 'confirmed' or reg[4] == 'cancelled':
+                    status = reg[4]
+                    status_column = 4
+                
+                if status == 'confirmed':
+                    registration_id = reg[0]
+                    break
+        
+        if not registration_id:
+            print(f"取消报名失败，未找到报名记录: user_id={current_user_id}, activity_id={activity_id}")
             return jsonify({'error': '您未报名此活动'}), 400
         
         activity = Activity.query.get(activity_id)
+        
+        # 获取报名记录并更新状态
+        registration = Registration.query.get(registration_id)
         
         # 取消报名
         registration.status = 'cancelled'
@@ -330,7 +378,7 @@ def cancel_registration(activity_id):
         
         db.session.commit()
         
-        print(f"取消报名成功: user_id={session['user_id']}, activity_id={activity_id}")
+        print(f"取消报名成功: user_id={current_user_id}, activity_id={activity_id}")
         return jsonify({'message': '取消报名成功'}), 200
         
     except Exception as e:
