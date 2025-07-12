@@ -106,6 +106,61 @@ const apiBaseUrl = import.meta.env.PROD ? '' : 'http://localhost:5002';
    ```
 3. 检查CORS配置是否正确允许凭证
 
+### 6. Nginx配置语法错误
+**问题**: Nginx服务无法启动，出现"invalid number of arguments in proxy_set_header directive"错误。
+**原因**: Nginx配置文件中的proxy_set_header指令缺少值。
+**解决方案**:
+1. 检查Nginx配置文件:
+   ```bash
+   sudo cat /etc/nginx/sites-enabled/aikepu
+   ```
+
+2. 修复proxy_set_header指令，确保每个指令都有对应的值:
+   ```nginx
+   # 错误配置
+   proxy_set_header Host ;
+   proxy_set_header X-Real-IP ;
+   
+   # 正确配置
+   proxy_set_header Host $host;
+   proxy_set_header X-Real-IP $remote_addr;
+   ```
+
+3. 修复try_files指令:
+   ```nginx
+   # 错误配置
+   try_files / /index.html;
+   
+   # 正确配置
+   try_files $uri /index.html;
+   ```
+
+4. 重启Nginx:
+   ```bash
+   sudo systemctl restart nginx
+   ```
+
+### 7. Python依赖缺失导致服务启动失败
+**问题**: 后端服务无法启动，出现"ModuleNotFoundError: No module named 'pytz'"错误。
+**解决方案**:
+1. 在服务器上安装缺失的依赖:
+   ```bash
+   cd /home/ubuntu/ai-kepu-base/backend
+   source venv/bin/activate
+   pip install pytz
+   ```
+
+2. 重启后端服务:
+   ```bash
+   sudo systemctl restart aikepu
+   ```
+
+3. 确保requirements.txt中包含所有必要的依赖:
+   ```bash
+   # 更新requirements.txt
+   pip freeze > requirements.txt
+   ```
+
 ## 最终解决方案验证
 
 1. **会话持久性**:
@@ -139,6 +194,19 @@ const apiBaseUrl = import.meta.env.PROD ? '' : 'http://localhost:5002';
    // config.js
    import axios from 'axios';
    axios.defaults.withCredentials = true;
+   ```
+
+4. **依赖检查**:
+   - 部署前检查本地和服务器环境依赖是否一致:
+   ```bash
+   # 本地
+   pip freeze > local_requirements.txt
+   
+   # 服务器
+   ssh ubuntu@119.29.168.57 "cd /home/ubuntu/ai-kepu-base/backend && source venv/bin/activate && pip freeze > server_requirements.txt"
+   
+   # 比较差异
+   diff local_requirements.txt server_requirements.txt
    ```
 
 ## SSL证书配置建议
