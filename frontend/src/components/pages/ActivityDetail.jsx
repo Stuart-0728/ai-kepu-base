@@ -46,6 +46,7 @@ const ActivityDetail = () => {
       if (response.ok) {
         const data = await response.json()
         console.log('获取活动详情成功:', data)
+        console.log('活动报名状态:', data.activity.is_registered)
         setActivity(data.activity)
       } else if (response.status === 404) {
         setError('活动不存在')

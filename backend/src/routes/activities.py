@@ -150,12 +150,15 @@ def get_activity_detail(activity_id):
         # 检查用户是否已报名（如果已登录）
         is_registered = False
         if 'user_id' in session:
+            user_id = session['user_id']
+            print(f"检查用户 {user_id} 是否报名活动 {activity_id}")
             registration = Registration.query.filter_by(
-                user_id=session['user_id'],
+                user_id=user_id,
                 activity_id=activity_id,
                 status='confirmed'
             ).first()
             is_registered = registration is not None
+            print(f"用户 {user_id} 报名状态: {is_registered}")
         
         now = get_beijing_time()
         
@@ -168,7 +171,7 @@ def get_activity_detail(activity_id):
             registration_deadline_naive = registration_deadline_naive.replace(tzinfo=None)
         registration_deadline_aware = beijing_tz.localize(registration_deadline_naive)
         
-        return jsonify({
+        response_data = {
             'activity': {
                 'id': activity.id,
                 'title': activity.title,
@@ -187,9 +190,13 @@ def get_activity_detail(activity_id):
                 'is_registration_open': registration_deadline_aware > now and activity.registered_count < activity.capacity,
                 'is_registered': is_registered
             }
-        }), 200
+        }
+        
+        print(f"返回活动详情，is_registered: {is_registered}")
+        return jsonify(response_data), 200
         
     except Exception as e:
+        print(f"获取活动详情失败: {str(e)}")
         return jsonify({'error': '获取活动详情失败'}), 500
 
 @activities_bp.route('/activities/<int:activity_id>/register', methods=['POST'])
