@@ -48,12 +48,18 @@ def export_activity_registrations(activity_id):
         # 获取活动信息
         activity = Activity.query.get_or_404(activity_id)
         
-        # 获取该活动的所有报名记录，包括已确认和已取消的
-        registrations = db.session.query(Registration, User).join(
+        # 获取该活动的所有报名记录，按时间降序排序
+        all_registrations = db.session.query(Registration, User).join(
             User, Registration.user_id == User.id
         ).filter(
             Registration.activity_id == activity_id
-        ).order_by(Registration.registered_at.asc()).all()
+        ).order_by(Registration.registered_at.desc()).all()
+        
+        # 按用户ID分组，只保留每个用户的最新记录
+        latest_registrations = {}
+        for reg, user in all_registrations:
+            if user.id not in latest_registrations:
+                latest_registrations[user.id] = (reg, user)
         
         # 定义字段
         fields = ['id', 'username', 'email', 'phone', 'registered_at', 'status']
@@ -63,23 +69,33 @@ def export_activity_registrations(activity_id):
         rows = []
         beijing_tz = pytz.timezone('Asia/Shanghai')
         
-        for reg, user in registrations:
-            # 将UTC时间转换为北京时间
-            registered_at_naive = reg.registered_at
-            if registered_at_naive.tzinfo is not None:
-                registered_at_naive = registered_at_naive.replace(tzinfo=None)
-            # 先添加UTC时区信息，再转换为北京时区
-            registered_at_utc = pytz.utc.localize(registered_at_naive)
-            registered_at_beijing = registered_at_utc.astimezone(beijing_tz)
+        for user_id, (reg, user) in latest_registrations.items():
+            # 智能检测哪个字段是状态字段
+            status = reg.status
+            registered_at = reg.registered_at
             
-            rows.append({
-                'id': reg.id,
-                'username': user.username,
-                'email': user.email,
-                'phone': user.phone or '未提供',
-                'registered_at': registered_at_beijing.strftime('%Y-%m-%d %H:%M:%S'),
-                'status': '已报名' if reg.status == 'confirmed' else '已取消'
-            })
+            # 如果status字段看起来像日期时间，而registered_at字段是字符串，则交换它们
+            if isinstance(status, datetime) and isinstance(registered_at, str) and registered_at in ['confirmed', 'cancelled']:
+                status, registered_at = registered_at, status
+                
+            # 只导出状态为confirmed的记录
+            if status == 'confirmed':
+                # 将UTC时间转换为北京时间
+                registered_at_naive = registered_at
+                if registered_at_naive.tzinfo is not None:
+                    registered_at_naive = registered_at_naive.replace(tzinfo=None)
+                # 先添加UTC时区信息，再转换为北京时区
+                registered_at_utc = pytz.utc.localize(registered_at_naive)
+                registered_at_beijing = registered_at_utc.astimezone(beijing_tz)
+                
+                rows.append({
+                    'id': reg.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'phone': user.phone or '未提供',
+                    'registered_at': registered_at_beijing.strftime('%Y-%m-%d %H:%M:%S'),
+                    'status': '已报名'
+                })
         
         # 导出为CSV
         if format_type == 'csv':

@@ -554,28 +554,69 @@ def admin_get_activity_registrations(activity_id):
         return jsonify({'error': '权限不足'}), 403
     
     try:
-        registrations = db.session.query(Registration, User).join(
+        print(f"检查用户 {session.get('user_id')} 是否报名活动 {activity_id}")
+        
+        # 获取所有报名记录
+        all_registrations = db.session.query(Registration, User).join(
             User, Registration.user_id == User.id
         ).filter(
-            Registration.activity_id == activity_id,
-            Registration.status == 'confirmed'
-        ).order_by(Registration.registered_at.asc()).all()
+            Registration.activity_id == activity_id
+        ).order_by(Registration.registered_at.desc()).all()
+        
+        # 按用户ID分组，只保留每个用户的最新记录
+        latest_registrations = {}
+        for reg, user in all_registrations:
+            if user.id not in latest_registrations:
+                latest_registrations[user.id] = (reg, user)
+        
+        # 处理结果
+        results = []
+        for user_id, (reg, user) in latest_registrations.items():
+            # 智能检测哪个字段是状态字段
+            status = reg.status
+            registered_at = reg.registered_at
+            
+            # 如果status字段看起来像日期时间，而registered_at字段是字符串，则交换它们
+            if isinstance(status, datetime) and isinstance(registered_at, str) and registered_at in ['confirmed', 'cancelled']:
+                status, registered_at = registered_at, status
+            
+            # 将UTC时间转换为北京时间
+            if isinstance(registered_at, datetime):
+                beijing_tz = pytz.timezone('Asia/Shanghai')
+                registered_at_naive = registered_at
+                if registered_at_naive.tzinfo is not None:
+                    registered_at_naive = registered_at_naive.replace(tzinfo=None)
+                registered_at_utc = pytz.utc.localize(registered_at_naive)
+                registered_at_beijing = registered_at_utc.astimezone(beijing_tz)
+                registered_at_str = registered_at_beijing.strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                registered_at_str = str(registered_at)
+            
+            # 只显示状态为confirmed的记录
+            if status == 'confirmed':
+                # 打印调试信息
+                print(f"用户 {user.id} 报名状态: {status == 'confirmed'}")
+                
+                results.append({
+                    'id': reg.id,
+                    'registered_at': registered_at_str,
+                    'status': '已报名',
+                    'status_code': status,
+                    'user': {
+                        'id': user.id,
+                        'username': user.username,
+                        'email': user.email,
+                        'phone': user.phone
+                    }
+                })
         
         return jsonify({
-            'registrations': [{
-                'id': reg.id,
-                'registered_at': reg.registered_at.isoformat(),
-                'user': {
-                    'id': user.id,
-                    'username': user.username,
-                    'email': user.email,
-                    'phone': user.phone
-                }
-            } for reg, user in registrations]
+            'registrations': results
         }), 200
         
     except Exception as e:
-        return jsonify({'error': '获取报名列表失败'}), 500
+        print(f"获取报名列表失败: {str(e)}")
+        return jsonify({'error': f'获取报名列表失败: {str(e)}'}), 500
 
 @activities_bp.route('/activities/categories', methods=['GET'])
 def get_activity_categories():
